@@ -1,0 +1,14 @@
+{
+  "users": [
+    {
+      "username": "mixademy.admin",
+      "role": "Superadmin",
+      "encodedPassword": "bWl4YWRlbXkuYWRtaW4uZXZlbnQ="
+    },
+    {
+      "username": "szervezo.teszt",
+      "role": "Szervező",
+      "encodedPassword": "MTIzNDU2"
+    }
+  ]
+}
