@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 {
   "users": [
     {
@@ -11,4 +12,19 @@
       "encodedPassword": "MTIzNDU2"
     }
   ]
+=======
+{
+  "users": [
+    {
+      "username": "mixademy.admin",
+      "role": "Superadmin",
+      "encodedPassword": "bWl4YWRlbXkuYWRtaW4uZXZlbnQ="
+    },
+    {
+      "username": "szervezo.teszt",
+      "role": "Szervező",
+      "encodedPassword": "MTIzNDU2"
+    }
+  ]
+>>>>>>> 37791a5b8873145b89fea2838982f11ca2c0c3bf
 }
