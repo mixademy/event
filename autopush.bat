@@ -9,7 +9,7 @@ git diff --cached --quiet
 
 if errorlevel 1 (
     git commit -m "Auto update"
-    git push origin main
+    git push origin main --force
 )
 
 timeout /t 10 >nul
