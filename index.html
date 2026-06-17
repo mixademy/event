@@ -68,7 +68,6 @@
             padding: 20px;
             transition: all 0.3s ease;
             overflow-x: auto;
-            /* Mobilon a kilógó táblázatok scrollozhatóak lesznek */
         }
 
         input,
@@ -84,7 +83,6 @@
             font-size: 0.9rem;
             transition: all 0.3s;
             -webkit-appearance: none;
-            /* iOS natív kinézet reset */
         }
 
         input:focus,
@@ -207,6 +205,7 @@
             font-weight: 500;
             color: #94a3b8;
             transition: all 0.3s;
+            margin-bottom: 5px;
         }
 
         .nav-link:hover,
@@ -290,11 +289,10 @@
         }
 
         .workspace-grid {
-            display: flex;
-            flex-direction: column;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
             gap: 30px;
-            align-items: stretch;
-            width: 100%;
+            align-items: start;
         }
 
         .event-tabs {
@@ -367,7 +365,6 @@
         @media (max-width: 900px) {
             #app-view {
                 flex-direction: column;
-                /* Egymás alá kerül a menü és a tartalom */
                 width: 100vw;
                 height: 100vh;
                 border-radius: 0;
@@ -376,48 +373,32 @@
 
             .sidebar {
                 width: 100%;
-                padding: 15px 20px;
-                flex-direction: row;
-                flex-wrap: wrap;
-                justify-content: space-between;
-                align-items: center;
+                flex-direction: column;
+                align-items: stretch;
                 border-right: none;
                 border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                padding: 15px 20px;
             }
 
             .sidebar .brand {
-                margin-bottom: 0;
+                text-align: center;
+                margin-bottom: 15px;
                 font-size: 1.2rem;
             }
 
-            /* A navigációs gombok vízszintesen rendeződnek */
-            .nav-link {
-                padding: 10px;
-                font-size: 0.85rem;
-                flex: 1;
-                text-align: center;
-                justify-content: center;
-            }
-
-            .sidebar>div:last-child {
-                margin-top: 0;
-                width: auto;
-            }
-
-            /* Státusz elrejtése a menüből, hogy elférjünk (vagy átalakítása) */
             .session-status {
                 display: none;
             }
+
+            /* Mobilon elrejtjük a státuszt a helytakarékosság miatt */
 
             .content-area {
                 padding: 20px;
             }
 
-            /* Felülírjuk az in-line rácsokat mobilon 1 oszloposra */
+            /* Felülírjuk az in-line rácsokat 1 oszloposra */
             .workspace-grid {
-                display: flex !important;
-                flex-direction: column !important;
-                width: 100%;
+                grid-template-columns: 1fr !important;
             }
 
             .stat-grid {
@@ -446,27 +427,6 @@
                 padding: 30px 20px;
             }
 
-            /* Menü mobilon: egymás alá ugranak a sorok */
-            .sidebar {
-                gap: 10px;
-                justify-content: center;
-            }
-
-            .sidebar .brand {
-                width: 100%;
-                text-align: center;
-                margin-bottom: 10px;
-            }
-
-            .sidebar>div:last-child {
-                width: 100%;
-            }
-
-            .sidebar>div:last-child button {
-                width: 100%;
-            }
-
-            /* A statisztika kártyák is egymás alá kerülnek */
             .stat-grid {
                 grid-template-columns: 1fr;
                 gap: 10px;
@@ -519,16 +479,13 @@
                         id="sidebar-time"></span></div>
             </div>
 
-            <div style="display: flex; gap: 5px; width: 100%; flex-wrap: wrap;">
-                <div class="nav-link active" id="nav-events" onclick="switchMainTab('events-list-panel')">📁 Események
-                </div>
-                <div class="nav-link admin-only" id="nav-checkins" onclick="switchMainTab('checkin-log-panel')">⏱️ Napló
-                </div>
-                <div class="nav-link admin-only" id="nav-users" onclick="switchMainTab('global-users-panel')">👤 Stáb
-                </div>
+            <div class="nav-link active" id="nav-events" onclick="switchMainTab('events-list-panel')">📁 Események</div>
+            <div class="nav-link admin-only" id="nav-checkins" onclick="switchMainTab('checkin-log-panel')">⏱️ Napló
             </div>
+            <div class="nav-link admin-only" id="nav-users" onclick="switchMainTab('global-users-panel')">👤
+                Felhasználók</div>
 
-            <div style="margin-top: auto; padding: 0 5px;">
+            <div style="margin-top: auto; padding: 10px 0 0 0;">
                 <button class="btn-secondary" style="width: 100%;" onclick="logoutUser()">Kijelentkezés</button>
             </div>
         </div>
@@ -725,17 +682,33 @@
             <div id="global-users-panel" class="main-panel">
                 <div style="margin-bottom: 30px;">
                     <h2>Rendszer Felhasználók</h2>
+                    <p style="color: #64748b; font-size: 0.9rem;">Áttekintheted a meglévő fiókokat, és új felhasználókat
+                        adhatsz a rendszerhez.</p>
                 </div>
-                <div class="glass-card">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Felhasználónév</th>
-                                <th>Jogosultság</th>
-                            </tr>
-                        </thead>
-                        <tbody id="users-table-body"></tbody>
-                    </table>
+                <div class="workspace-grid">
+                    <div class="glass-card list-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Felhasználónév</th>
+                                    <th>Jogosultság</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-table-body"></tbody>
+                        </table>
+                    </div>
+                    <div class="glass-card form-container admin-only">
+                        <h3 style="margin-bottom: 15px;">+ Új Felhasználó Fiók</h3>
+                        <input type="text" id="new-sys-user" placeholder="Új felhasználónév">
+                        <input type="text" id="new-sys-pass" placeholder="Jelszó">
+                        <select id="new-sys-role">
+                            <option value="Adminisztrátor">Adminisztrátor</option>
+                            <option value="Szervező">Szervező</option>
+                            <option value="Technikus">Technikus</option>
+                        </select>
+                        <button class="btn-primary" style="width: 100%; margin-top: 10px;" onclick="addNewUser()">Fiók
+                            létrehozása</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -802,7 +775,8 @@
         let appState = {
             events: JSON.parse(localStorage.getItem('mixademy_events')) || defaultEvents,
             checkins: [],
-            users: [],
+            localUsers: JSON.parse(localStorage.getItem('mixademy_local_users')) || [], // Újonnan felvett felhasználók
+            jsonUsers: [], // JSON-ből betöltött fix felhasználók
             currentUser: JSON.parse(localStorage.getItem('mixademy_currentUser')) || null,
             activeEventId: null,
             activeProgramId: null
@@ -810,6 +784,9 @@
 
         function saveData() {
             localStorage.setItem('mixademy_events', JSON.stringify(appState.events));
+        }
+        function saveLocalUsers() {
+            localStorage.setItem('mixademy_local_users', JSON.stringify(appState.localUsers));
         }
 
         // --- FIREBASE REALTIME LISTENER A BECSEKKOLÁSOKHOZ ---
@@ -826,7 +803,6 @@
             }
         });
 
-        // --- MANUÁLIS FRISSÍTÉS GOMB LOGIKÁJA ---
         async function refreshCheckinLog() {
             const btn = event.currentTarget;
             const originalText = btn.innerHTML;
@@ -871,11 +847,16 @@
 
             try {
                 const inputEncoded = btoa(p);
+
+                // Beolvassuk a JSON-t (Fix fiókok)
                 const response = await fetch('users.json');
                 const data = await response.json();
-                appState.users = data.users;
+                appState.jsonUsers = data.users;
 
-                const userFound = appState.users.find(user => user.username === u && user.encodedPassword === inputEncoded);
+                // Egyesítjük a fix és az újonnan létrehozott fiókokat
+                const allAvailableUsers = [...appState.jsonUsers, ...appState.localUsers];
+
+                const userFound = allAvailableUsers.find(user => user.username === u && user.encodedPassword === inputEncoded);
 
                 if (userFound) {
                     appState.currentUser = { username: userFound.username, role: userFound.role };
@@ -935,7 +916,6 @@
             const isAdmin = appState.currentUser && appState.currentUser.role === 'Superadmin';
             document.querySelectorAll('.admin-only').forEach(el => { el.style.display = isAdmin ? '' : 'none'; });
 
-            // Ha nem admin, a Grid egy oszlopos legyen asztali nézeten is, hogy kitöltse a teret az űrlapok nélkül
             if (!isAdmin && window.innerWidth > 900) {
                 document.querySelectorAll('.workspace-grid').forEach(grid => { grid.style.gridTemplateColumns = '1fr'; });
             }
@@ -945,9 +925,7 @@
         function initApp() {
             renderEventsList();
             renderCheckinLog();
-            fetch('users.json').then(r => r.json()).then(data => {
-                document.getElementById('users-table-body').innerHTML = data.users.map(u => `<tr><td>🔑 ${u.username}</td><td><span class="badge ${u.role === 'Superadmin' ? 'badge-admin' : 'badge-done'}">${u.role}</span></td></tr>`).join('');
-            }).catch(e => console.log("Users API error"));
+            renderUsersList();
         }
 
         function switchMainTab(panelId) {
@@ -958,6 +936,48 @@
             if (panelId === 'events-list-panel') document.getElementById('nav-events').classList.add('active');
             if (panelId === 'checkin-log-panel') document.getElementById('nav-checkins').classList.add('active');
             if (panelId === 'global-users-panel') document.getElementById('nav-users').classList.add('active');
+        }
+
+        // --- FELHASZNÁLÓK LISTÁZÁSA ÉS HOZZÁADÁSA ---
+        function renderUsersList() {
+            // Betöltjük a fix fiókokat a JSON-ből, ha még nem tettük
+            if (appState.jsonUsers.length === 0) {
+                fetch('users.json').then(r => r.json()).then(data => {
+                    appState.jsonUsers = data.users;
+                    _drawUsersTable();
+                }).catch(e => console.log("Users API error"));
+            } else {
+                _drawUsersTable();
+            }
+        }
+
+        function _drawUsersTable() {
+            const allAvailableUsers = [...appState.jsonUsers, ...appState.localUsers];
+            document.getElementById('users-table-body').innerHTML = allAvailableUsers.map(u =>
+                `<tr><td>🔑 ${u.username}</td><td><span class="badge ${u.role === 'Superadmin' || u.role === 'Adminisztrátor' ? 'badge-admin' : 'badge-done'}">${u.role}</span></td></tr>`
+            ).join('');
+        }
+
+        function addNewUser() {
+            const u = document.getElementById('new-sys-user').value;
+            const p = document.getElementById('new-sys-pass').value;
+            const r = document.getElementById('new-sys-role').value;
+
+            if (u && p) {
+                appState.localUsers.push({
+                    username: u,
+                    role: r,
+                    encodedPassword: btoa(p) // Jelszó kódolása
+                });
+                saveLocalUsers();
+                _drawUsersTable(); // Táblázat frissítése
+
+                document.getElementById('new-sys-user').value = '';
+                document.getElementById('new-sys-pass').value = '';
+                alert(`✅ A(z) ${u} nevű fiók sikeresen létrejött!`);
+            } else {
+                alert("Kérlek, adj meg felhasználónevet és jelszót is!");
+            }
         }
 
         function renderCheckinLog() {
@@ -1123,6 +1143,7 @@
         window.addProgramToEvent = addProgramToEvent;
         window.openTracklistInNewTab = openTracklistInNewTab;
         window.addTrackToSetlist = addTrackToSetlist;
+        window.addNewUser = addNewUser;
     </script>
 </body>
 
