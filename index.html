@@ -4,8 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mixademy Event - Build Your Own Sound - Your Journey Begins Here!</title>
-    <link rel="shortcut icon" href="logo.png" type="image/x-icon">
+    <title>Mixademy Core - Advanced Event Workspace</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
@@ -300,6 +299,7 @@
             margin-bottom: 25px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.08);
             padding-bottom: 12px;
+            overflow-x: auto;
         }
 
         .event-tab-btn {
@@ -436,7 +436,7 @@
     <div class="bg-glow glow2"></div>
 
     <div id="login-view" class="glass">
-        <h1>Mixademy Event</h1>
+        <h1>Mixademy Core</h1>
         <p style="color: #64748b; margin-bottom: 30px; font-size: 0.95rem;">Biztonsági Beléptető</p>
         <input type="text" id="login-username" placeholder="Felhasználónév">
         <input type="password" id="login-password" placeholder="Jelszó">
@@ -447,12 +447,15 @@
 
     <div id="app-view" class="glass">
         <div class="sidebar">
-            <div class="brand">MIXADEMY EVENT</div>
+            <div class="brand">MIXADEMY CORE</div>
 
             <div class="session-status">
                 <div style="color: #e2e8f0; font-weight: 600; font-size: 0.9rem; margin-bottom: 5px;">👤 <span
                         id="sidebar-username"></span></div>
-                <div style="color: #38bdf8; font-size: 0.8rem;">🟢 <span id="sidebar-role"></span></div>
+                <div style="font-size: 0.8rem;">
+                    <span id="sidebar-status-icon">🔴</span> <span id="sidebar-status-text">Kicsekkolva</span> | <span
+                        id="sidebar-role" style="color: #38bdf8;"></span>
+                </div>
             </div>
 
             <div class="nav-link active" id="nav-system-dashboard" onclick="switchMainTab('system-dashboard-panel')">🏠
@@ -533,11 +536,14 @@
             </div>
 
             <div id="event-detail-panel" class="main-panel">
-                <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 25px; flex-wrap: wrap;">
-                    <button class="btn-secondary" onclick="switchMainTab('events-list-panel')">← Vissza</button>
-                    <div>
-                        <h2 id="active-event-title">Esemény Neve</h2>
-                        <p id="active-event-meta" style="color: #64748b; font-size: 0.9rem;">Dátum | Helyszín</p>
+                <div
+                    style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
+                    <div style="display: flex; align-items: center; gap: 20px;">
+                        <button class="btn-secondary" onclick="switchMainTab('events-list-panel')">← Vissza</button>
+                        <div>
+                            <h2 id="active-event-title">Esemény Neve</h2>
+                            <p id="active-event-meta" style="color: #64748b; font-size: 0.9rem;">Dátum | Helyszín</p>
+                        </div>
                     </div>
                 </div>
 
@@ -546,6 +552,9 @@
                     <div class="event-tab-btn" onclick="switchEventSubTab('event-staff')">👥 Crew & Stáb</div>
                     <div class="event-tab-btn" onclick="switchEventSubTab('event-inventory')">💡 Technikai Leltár</div>
                     <div class="event-tab-btn" onclick="switchEventSubTab('event-program')">🎵 Program & Setlist</div>
+                    <div class="event-tab-btn"
+                        style="color: #38bdf8; border-left: 1px solid rgba(255,255,255,0.1); margin-left: auto; padding-left: 20px;"
+                        onclick="exportEventData()">📤 Esemény Export</div>
                 </div>
 
                 <div id="event-dashboard" class="event-sub-section active">
@@ -566,8 +575,8 @@
                             <div class="stat-label">Fénytechnika</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-number" id="stat-dj">0</div>
-                            <div class="stat-label">Fellépő DJ</div>
+                            <div class="stat-number" id="stat-other">0</div>
+                            <div class="stat-label">Egyéb Eszköz</div>
                         </div>
                     </div>
                     <div class="glass-card form-container admin-only" style="margin-top: 30px;">
@@ -625,15 +634,22 @@
                                 <ul id="event-lighting-list"
                                     style="padding-left: 20px; color: #cbd5e1; line-height: 1.8;"></ul>
                             </div>
+                            <div class="glass-card">
+                                <h3 style="color: #10b981; margin-bottom: 10px;">📦 Egyéb / Kiegészítők</h3>
+                                <ul id="event-other-list" style="padding-left: 20px; color: #cbd5e1; line-height: 1.8;">
+                                </ul>
+                            </div>
                         </div>
                         <div class="glass-card form-container admin-only">
-                            <h3>+ Eszköz felvitele</h3><select id="new-asset-type">
+                            <h3>+ Eszköz felvitele</h3>
+                            <select id="new-asset-type">
                                 <option value="audio">Hangtechnika</option>
                                 <option value="lighting">Fénytechnika</option>
-                            </select><input type="text" id="new-asset-name"
-                                placeholder="Eszköz (pl. DMX-192, CDJ-3000)"><button class="btn-primary"
-                                style="width: 100%; margin-top: 10px;" onclick="addAssetToEvent()">Leltárba
-                                rakás</button>
+                                <option value="other">Egyéb / Kiegészítő</option>
+                            </select>
+                            <input type="text" id="new-asset-name" placeholder="Eszköz (pl. Kábelek, Füstgép)">
+                            <button class="btn-primary" style="width: 100%; margin-top: 10px;"
+                                onclick="addAssetToEvent()">Leltárba rakás</button>
                         </div>
                     </div>
                 </div>
@@ -708,6 +724,7 @@
                                 <tr>
                                     <th>Felhasználónév</th>
                                     <th>Jogosultság</th>
+                                    <th>Művelet</th>
                                 </tr>
                             </thead>
                             <tbody id="users-table-body"></tbody>
@@ -738,9 +755,35 @@
                 <h1 id="tracklist-header-dj" style="font-size: 2rem; margin-bottom: 10px;">Betöltés...</h1>
                 <p id="tracklist-header-meta" style="color: #94a3b8; font-size: 1rem;"></p>
             </div>
+
+            <div class="glass-card"
+                style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                <div>
+                    <h3 style="margin-bottom: 5px; color: #e2e8f0;">⌚ Setlist Élő Időzítő</h3>
+                    <div id="setlist-timer-display"
+                        style="font-size: 2.2rem; font-weight: 700; color: #38bdf8; font-variant-numeric: tabular-nums;">
+                        00:00:00</div>
+                    <p id="setlist-timer-status" style="color: #64748b; font-size: 0.85rem; margin-top: 5px;">Még nem
+                        indult el.</p>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn-primary" onclick="startSetlistTimer()">▶ Indítás</button>
+                    <button class="btn-danger" onclick="stopSetlistTimer()">⏹ Leállítás</button>
+                </div>
+            </div>
+
             <div class="workspace-grid" id="tracklist-grid">
                 <div class="glass-card list-container">
-                    <h2>Zenék listája</h2>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h2>Zenék listája</h2>
+                        <div>
+                            <input type="file" id="import-tracklist-file" accept=".txt" style="display:none;"
+                                onchange="importTracklistTxt(event)">
+                            <button class="btn-secondary admin-only"
+                                onclick="document.getElementById('import-tracklist-file').click()">📁 TXT
+                                Import</button>
+                        </div>
+                    </div>
                     <table style="margin-top: 20px;">
                         <thead>
                             <tr>
@@ -758,6 +801,8 @@
                         id="new-track-title" placeholder="Szám címe">
                     <button class="btn-primary" style="width: 100%; margin-top: 15px;"
                         onclick="addTrackToSetlist()">Zene mentése</button>
+                    <p style="color: #64748b; font-size: 0.75rem; margin-top: 15px; text-align: center;">Tipp: A TXT
+                        fájlban soronként "Előadó - Cím" formátumban kell lenniük a zenéknek.</p>
                 </div>
             </div>
         </div>
@@ -765,8 +810,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        // Bekerült az updateDoc és a doc importja a kicsekkoláshoz!
-        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, deleteDoc, getDocs, updateDoc, doc }
+        // Bekerült az setDoc és a getDoc a teljes esemény-szinkronizáláshoz!
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, deleteDoc, getDocs, updateDoc, doc, setDoc, getDoc }
             from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -781,15 +826,16 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // --- 1. ADATBÁZIS & LOCAL STORAGE INICIALIZÁLÁS ---
+        // --- 1. ADATBÁZIS & ÁLLAPOT INICIALIZÁLÁS ---
         const defaultEvents = [{
             id: 1, name: "Neon City Showcase", date: "2026. Július 10.", status: "Aktív",
             staff: [{ name: "Mór Bálint", role: "Főszervező / Stage Design" }],
-            inventory: { audio: ["Pioneer CDJ-3000 (2 db)"], lighting: ["Robotlámpa (4 db)", "DMX-192 Kontroller"] },
-            program: [{ id: 101, time: "22:00 - 00:00", dj: "MØR", style: "Afro House / Nu Disco", tracks: [{ artist: "MØR", title: "Neon City Intro Edit" }] }]
+            inventory: { audio: ["Pioneer CDJ-3000 (2 db)"], lighting: ["Robotlámpa (4 db)", "DMX-192 Kontroller"], other: ["Füstgép", "XLR Kábel köteg"] },
+            program: [{ id: 101, time: "22:00 - 00:00", dj: "MØR", style: "Afro House / Nu Disco", startedAt: null, stoppedAt: null, tracks: [{ artist: "MØR", title: "Neon City Intro Edit" }] }]
         }];
 
         let appState = {
+            // Ezt mostantól a Firebase fogja felülírni, amint betölt!
             events: JSON.parse(localStorage.getItem('mixademy_events')) || defaultEvents,
             checkins: [],
             localUsers: JSON.parse(localStorage.getItem('mixademy_local_users')) || [],
@@ -799,38 +845,53 @@
             activeProgramId: null
         };
 
-        function saveData() { localStorage.setItem('mixademy_events', JSON.stringify(appState.events)); }
+        // --- ÚJ: ESEMÉNYEK SZINKRONIZÁLÁSA FIREBASE-BE ---
+        const eventsDocRef = doc(db, "system", "global_events");
+
+        // Figyeljük a felhőt, hogy más módosított-e valamit az eseményekben
+        onSnapshot(eventsDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+                appState.events = docSnap.data().list || [];
+                // Ha érkezik egy frissítés, azonnal újrarajzoljuk a felületeket
+                renderEventsList();
+                if (document.getElementById('event-detail-panel').classList.contains('active')) renderEventSubSections();
+                if (document.getElementById('tracklist-fullscreen-view').style.display === 'block') renderTracklistPage();
+            }
+        });
+
+        // Az eredeti saveData helyett most mindent a felhőbe küldünk
+        async function saveData() {
+            try {
+                await setDoc(eventsDocRef, { list: appState.events });
+            } catch (e) {
+                console.error("Hiba az események szinkronizálásakor:", e);
+                localStorage.setItem('mixademy_events', JSON.stringify(appState.events)); // Biztonsági tartalék
+            }
+        }
+
+        // Fiókok mentése (Marad helyi storage, a kérés szerint)
         function saveLocalUsers() { localStorage.setItem('mixademy_local_users', JSON.stringify(appState.localUsers)); }
 
-        // --- FIREBASE REALTIME LISTENER A BECSEKKOLÁSOKHOZ ---
+        // --- FIREBASE JELENLÉTI NAPLÓ SZINKRON ---
         const checkinsRef = collection(db, "checkins");
         const q = query(checkinsRef, orderBy("createdAt", "desc"));
-
         onSnapshot(q, (snapshot) => {
             appState.checkins = [];
-            snapshot.forEach((d) => {
-                appState.checkins.push({ id: d.id, ...d.data() });
-            });
+            snapshot.forEach((d) => { appState.checkins.push({ id: d.id, ...d.data() }); });
             updateSystemDashboard();
-            if (document.getElementById('checkin-log-panel').classList.contains('active')) {
-                renderCheckinLog();
-            }
+            if (document.getElementById('checkin-log-panel').classList.contains('active')) renderCheckinLog();
         });
 
         async function refreshCheckinLog(e) {
             let btn = e ? e.currentTarget : null;
             let originalText = "🔄 Frissítés";
             if (btn) { originalText = btn.innerHTML; btn.innerHTML = "⏳ Frissítés..."; }
-
             try {
                 const querySnapshot = await getDocs(q);
                 appState.checkins = [];
                 querySnapshot.forEach((d) => { appState.checkins.push({ id: d.id, ...d.data() }); });
-                renderCheckinLog();
-                updateSystemDashboard();
-            } catch (error) {
-                console.error("Hiba a frissítés során: ", error);
-            } finally { if (btn) setTimeout(() => btn.innerHTML = originalText, 500); }
+                renderCheckinLog(); updateSystemDashboard();
+            } catch (error) { console.error(error); } finally { if (btn) setTimeout(() => btn.innerHTML = originalText, 500); }
         }
 
         async function clearCheckinLog() {
@@ -840,45 +901,59 @@
                     const deletePromises = [];
                     querySnapshot.forEach((docSnap) => { deletePromises.push(deleteDoc(docSnap.ref)); });
                     await Promise.all(deletePromises);
-                    appState.checkins = [];
-                    renderCheckinLog();
-                    updateSystemDashboard();
+                    appState.checkins = []; renderCheckinLog(); updateSystemDashboard();
                     alert("A jelenléti napló sikeresen törölve lett a felhőből!");
-                } catch (error) {
-                    console.error("Hiba a törlésnél: ", error);
-                    alert("Hiba történt a törlés során. Ellenőrizd a konzolt!");
-                }
+                } catch (error) { alert("Hiba történt a törlés során."); }
             }
         }
 
-        // --- TXT EXPORT FUNKCIÓ ---
+        // --- TXT EXPORT: JELENLÉT ---
         function exportCheckinsToTxt() {
-            if (appState.checkins.length === 0) {
-                alert("Nincs mit exportálni, a napló üres!");
-                return;
-            }
-
-            let txtContent = "MIXADEMY EVENT - JELENLÉTI NAPLÓ EXPORT\n";
-            txtContent += `Készítve: ${new Date().toLocaleString('hu-HU')}\n`;
-            txtContent += "=================================================\n\n";
-
+            if (appState.checkins.length === 0) { alert("Nincs mit exportálni, a napló üres!"); return; }
+            let txtContent = "MIXADEMY CORE - JELENLÉTI NAPLÓ EXPORT\nKészítve: " + new Date().toLocaleString('hu-HU') + "\n=================================================\n\n";
             appState.checkins.forEach(c => {
                 const inTime = c.checkInTime || c.time || 'Ismeretlen';
                 const outTime = c.checkOutTime || 'Folyamatban...';
+                txtContent += `Felhasználó: @${c.user} (${c.role})\nBecsekkolás: ${inTime}\nKicsekkolás: ${outTime}\n-------------------------------------------------\n`;
+            });
+            downloadTxtFile(txtContent, `Mixademy_Jelenlet_${new Date().toISOString().split('T')[0]}.txt`);
+        }
 
-                txtContent += `Felhasználó: @${c.user} (${c.role})\n`;
-                txtContent += `Becsekkolás ideje: ${inTime}\n`;
-                txtContent += `Kicsekkolás ideje: ${outTime}\n`;
-                txtContent += "-------------------------------------------------\n";
+        // --- ÚJ: TXT EXPORT: ESEMÉNY ADATOK ---
+        function exportEventData() {
+            const evt = appState.events.find(e => e.id === appState.activeEventId);
+            if (!evt) return;
+
+            let txt = `MIXADEMY CORE - ESEMÉNY DOKUMENTÁCIÓ\n=================================================\n`;
+            txt += `Esemény: ${evt.name}\nDátum: ${evt.date}\nStátusz: ${evt.status}\n\n`;
+
+            txt += `--- STÁB ÉS SZEMÉLYZET (${evt.staff.length} fő) ---\n`;
+            evt.staff.forEach(s => txt += `• ${s.name} - ${s.role}\n`);
+
+            txt += `\n--- TECHNIKAI LELTÁR ---\n`;
+            txt += `Hangtechnika:\n`; evt.inventory.audio.forEach(i => txt += `  - ${i}\n`);
+            txt += `Fénytechnika:\n`; evt.inventory.lighting.forEach(i => txt += `  - ${i}\n`);
+            txt += `Egyéb eszközök:\n`; (evt.inventory.other || []).forEach(i => txt += `  - ${i}\n`);
+
+            txt += `\n--- PROGRAM ÉS SETLISTEK ---\n`;
+            evt.program.forEach(p => {
+                txt += `\n[ ${p.time} ] Fellépő: ${p.dj} (${p.style})\n`;
+                txt += `  ▶ Időzítő: Indítva: ${p.startedAt || 'Nincs indítva'} | Leállítva: ${p.stoppedAt || 'Nincs leállítva'}\n`;
+                if (p.tracks && p.tracks.length > 0) {
+                    txt += `  Tracklist:\n`;
+                    p.tracks.forEach((t, i) => txt += `    ${i + 1}. ${t.artist} - ${t.title}\n`);
+                } else {
+                    txt += `  Tracklist: Nincs feltöltve zene.\n`;
+                }
             });
 
-            const blob = new Blob([txtContent], { type: "text/plain;charset=utf-8" });
+            downloadTxtFile(txt, `Mixademy_Esemeny_${evt.name.replace(/\s+/g, '_')}.txt`);
+        }
+
+        function downloadTxtFile(content, filename) {
+            const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
             const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.href = url;
-            link.download = `Mixademy_Jelenlet_${new Date().toISOString().split('T')[0]}.txt`;
-            link.click();
-            URL.revokeObjectURL(url);
+            const link = document.createElement("a"); link.href = url; link.download = filename; link.click(); URL.revokeObjectURL(url);
         }
 
         // --- 2. ROUTING ---
@@ -889,16 +964,19 @@
             document.getElementById('login-view').style.display = 'none';
             document.getElementById('tracklist-fullscreen-view').style.display = 'block';
             applyRBAC();
-            renderTracklistPage();
+
+            // Ha a linkből nyílik meg, megpróbáljuk betölteni az adatokat a felhőből, ha üresek
+            getDoc(eventsDocRef).then((docSnap) => {
+                if (docSnap.exists()) appState.events = docSnap.data().list || [];
+                renderTracklistPage();
+            });
         } else {
             if (appState.currentUser) {
-                // Ha be van jelentkezve, egyből a Vezérlőpultra megy, kihagyja az üdvözlő képernyőt
                 document.getElementById('login-view').style.display = 'none';
                 document.getElementById('app-view').style.display = 'flex';
                 document.getElementById('sidebar-username').innerText = appState.currentUser.username;
-                applyRBAC();
-                initApp();
-                updateCheckinButtonState();
+                document.getElementById('sidebar-role').innerText = appState.currentUser.role;
+                applyRBAC(); initApp(); updateCheckinButtonState();
             }
         }
 
@@ -924,120 +1002,84 @@
                     document.getElementById('login-view').style.display = 'none';
                     document.getElementById('app-view').style.display = 'flex';
                     document.getElementById('sidebar-username').innerText = appState.currentUser.username;
+                    document.getElementById('sidebar-role').innerText = appState.currentUser.role;
 
-                    applyRBAC();
-                    initApp();
-                    updateCheckinButtonState();
-                    errorMsg.style.display = 'none';
+                    applyRBAC(); initApp(); updateCheckinButtonState(); errorMsg.style.display = 'none';
                 } else {
-                    errorMsg.innerText = "Hibás felhasználónév vagy jelszó!";
-                    errorMsg.style.display = 'block';
+                    errorMsg.innerText = "Hibás felhasználónév vagy jelszó!"; errorMsg.style.display = 'block';
                 }
-            } catch (error) {
-                errorMsg.innerText = "Rendszerhiba a hitelesítés során!";
-                errorMsg.style.display = 'block';
-            }
+            } catch (error) { errorMsg.innerText = "Rendszerhiba a hitelesítés során!"; errorMsg.style.display = 'block'; }
         }
 
-        // --- A BECSEKKOLÁS / KICSEKKOLÁS LOGIKÁJA ---
         function updateCheckinButtonState() {
             const btn = document.getElementById('btn-toggle-checkin');
+            const icon = document.getElementById('sidebar-status-icon');
+            const text = document.getElementById('sidebar-status-text');
             const activeSessionId = localStorage.getItem('mixademy_active_session');
 
             if (activeSessionId) {
-                btn.className = 'btn-danger';
-                btn.innerHTML = '🔴 Kicsekkolás';
+                btn.className = 'btn-danger'; btn.innerHTML = '🔴 Kicsekkolás';
+                icon.innerText = '🟢'; text.innerText = 'Becsekkolva'; text.style.color = "#10b981";
             } else {
-                btn.className = 'btn-primary';
-                btn.innerHTML = '🟢 Becsekkolás';
+                btn.className = 'btn-primary'; btn.innerHTML = '🟢 Becsekkolás';
+                icon.innerText = '🔴'; text.innerText = 'Kicsekkolva'; text.style.color = "#64748b";
             }
         }
 
         async function toggleCheckin() {
             const activeSessionId = localStorage.getItem('mixademy_active_session');
             const now = new Date();
-            const timeStr = now.toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            const dateStr = now.toLocaleDateString('hu-HU');
-            const fullTime = `${dateStr} ${timeStr}`;
+            const fullTime = `${now.toLocaleDateString('hu-HU')} ${now.toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
 
             if (activeSessionId) {
-                // KICSEKKOLÁS (Már van aktív munkamenet, frissítjük a felhőt)
                 try {
-                    const docRef = doc(db, "checkins", activeSessionId);
-                    await updateDoc(docRef, {
-                        checkOutTime: fullTime
-                    });
-                    localStorage.removeItem('mixademy_active_session');
-                    updateCheckinButtonState();
-                } catch (e) {
-                    console.error("Hiba a kicsekkolásnál: ", e);
-                    // Ha a dokumentum közben törlődött, tisztítsuk a helyi storage-t
-                    localStorage.removeItem('mixademy_active_session');
-                    updateCheckinButtonState();
-                }
+                    await updateDoc(doc(db, "checkins", activeSessionId), { checkOutTime: fullTime });
+                    localStorage.removeItem('mixademy_active_session'); updateCheckinButtonState();
+                } catch (e) { localStorage.removeItem('mixademy_active_session'); updateCheckinButtonState(); }
             } else {
-                // BECSEKKOLÁS (Új munkamenet létrehozása)
                 try {
                     const docRef = await addDoc(collection(db, "checkins"), {
-                        user: appState.currentUser.username,
-                        role: appState.currentUser.role,
-                        checkInTime: fullTime,
-                        checkOutTime: null, // Még nem csekkolt ki
-                        createdAt: serverTimestamp()
+                        user: appState.currentUser.username, role: appState.currentUser.role, checkInTime: fullTime, checkOutTime: null, createdAt: serverTimestamp()
                     });
-                    // Lementjük a dokumentum ID-ját a böngészőbe, hogy később tudjuk mit kell frissíteni
-                    localStorage.setItem('mixademy_active_session', docRef.id);
-                    updateCheckinButtonState();
-                } catch (e) {
-                    console.error("Firebase hiba: ", e);
-                    alert("Nem sikerült kapcsolódni az adatbázishoz a becsekkolásnál!");
-                }
+                    localStorage.setItem('mixademy_active_session', docRef.id); updateCheckinButtonState();
+                } catch (e) { alert("Nem sikerült kapcsolódni az adatbázishoz!"); }
             }
         }
 
         async function logoutUser() {
-            const confirmed = confirm("Biztosan ki szeretnél jelentkezni?\n\nFigyelem: Ha kijelentkezel, automatikusan ki leszel csekkolva a rendszerből.");
-            if (confirmed) {
+            if (confirm("Biztosan ki szeretnél jelentkezni?\n\nFigyelem: Ha kijelentkezel, automatikusan ki leszel csekkolva a rendszerből.")) {
                 const activeSessionId = localStorage.getItem('mixademy_active_session');
-                // Automatikus kicsekkolás a háttérben
                 if (activeSessionId) {
-                    const now = new Date();
-                    const fullTime = `${now.toLocaleDateString('hu-HU')} ${now.toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
-                    try {
-                        const docRef = doc(db, "checkins", activeSessionId);
-                        await updateDoc(docRef, { checkOutTime: fullTime });
-                    } catch (e) { } // Elnyeljük a hibát kijelentkezéskor
+                    const now = new Date(); const fullTime = `${now.toLocaleDateString('hu-HU')} ${now.toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+                    try { await updateDoc(doc(db, "checkins", activeSessionId), { checkOutTime: fullTime }); } catch (e) { }
                 }
-
-                localStorage.removeItem('mixademy_currentUser');
-                localStorage.removeItem('mixademy_active_session');
-                location.reload();
+                localStorage.removeItem('mixademy_currentUser'); localStorage.removeItem('mixademy_active_session'); location.reload();
             }
         }
 
-        // --- 4. JOGOSULTSÁGKEZELÉS (RBAC) ---
         function applyRBAC() {
             const isAdmin = appState.currentUser && appState.currentUser.role === 'Superadmin';
             document.querySelectorAll('.admin-only').forEach(el => { el.style.display = isAdmin ? '' : 'none'; });
-            if (!isAdmin && window.innerWidth > 900) {
-                document.querySelectorAll('.workspace-grid').forEach(grid => { grid.style.gridTemplateColumns = '1fr'; });
-            }
+            if (!isAdmin && window.innerWidth > 900) { document.querySelectorAll('.workspace-grid').forEach(grid => { grid.style.gridTemplateColumns = '1fr'; }); }
         }
 
-        // --- 5. ALKALMAZÁS LOGIKA & NAVIGÁCIÓ ---
         function initApp() {
+            // Megnézzük a felhőt, ha még nem jött le adat az Eseményekről
+            getDoc(eventsDocRef).then((docSnap) => {
+                if (!docSnap.exists()) {
+                    setDoc(eventsDocRef, { list: appState.events }); // Alap adatok feltöltése, ha üres
+                } else {
+                    appState.events = docSnap.data().list || [];
+                    renderEventsList();
+                }
+            });
+
             if (appState.jsonUsers.length === 0) {
                 fetch('users.json').then(r => r.json()).then(data => {
-                    appState.jsonUsers = data.users;
-                    updateSystemDashboard();
-                    renderUsersList();
+                    appState.jsonUsers = data.users; updateSystemDashboard(); renderUsersList();
                 }).catch(e => console.log("Users API error"));
             }
-
-            renderEventsList();
-            renderCheckinLog();
-            renderUsersList();
-            updateSystemDashboard();
+            renderEventsList(); renderCheckinLog(); renderUsersList(); updateSystemDashboard();
         }
 
         function switchMainTab(panelId) {
@@ -1045,230 +1087,236 @@
             document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
             document.getElementById(panelId).classList.add('active');
 
-            if (panelId === 'system-dashboard-panel') document.getElementById('nav-system-dashboard').classList.add('active');
+            if (panelId === 'system-dashboard-panel') { document.getElementById('nav-system-dashboard').classList.add('active'); updateSystemDashboard(); }
             if (panelId === 'events-list-panel') document.getElementById('nav-events').classList.add('active');
             if (panelId === 'checkin-log-panel') document.getElementById('nav-checkins').classList.add('active');
             if (panelId === 'global-users-panel') document.getElementById('nav-users').classList.add('active');
-
-            if (panelId === 'system-dashboard-panel') updateSystemDashboard();
         }
 
         function updateSystemDashboard() {
-            const totalEvents = appState.events.length;
             const activeEvents = appState.events.filter(e => e.status !== 'Lezajlott').length;
-            const totalUsers = appState.jsonUsers.length + appState.localUsers.length;
-
-            // Aktív munkamenetek számolása (Ahol nincs kicsekkolási idő)
             const activeSessions = appState.checkins.filter(c => c.checkOutTime === null || c.checkOutTime === undefined).length;
 
-            document.getElementById('global-stat-events').innerText = totalEvents;
+            document.getElementById('global-stat-events').innerText = appState.events.length;
             document.getElementById('global-stat-active').innerText = activeEvents;
-            document.getElementById('global-stat-users').innerText = totalUsers;
-            document.getElementById('global-stat-checkins').innerText = activeSessions; // Kicseréltem aktív munkamenetre
+            document.getElementById('global-stat-users').innerText = appState.jsonUsers.length + appState.localUsers.length;
+            document.getElementById('global-stat-checkins').innerText = activeSessions;
 
             const recentEvents = appState.events.filter(e => e.status !== 'Lezajlott').slice(0, 3);
             document.getElementById('dashboard-recent-events').innerHTML = recentEvents.length > 0
-                ? recentEvents.map(e => `<li><b>${e.name}</b> <span style="color:#64748b; font-size:0.8rem;">(${e.date})</span></li>`).join('')
-                : '<li>Nincs aktív esemény.</li>';
+                ? recentEvents.map(e => `<li><b>${e.name}</b> <span style="color:#64748b; font-size:0.8rem;">(${e.date})</span></li>`).join('') : '<li>Nincs aktív esemény.</li>';
 
             const recentCheckins = appState.checkins.slice(0, 3);
             document.getElementById('dashboard-recent-checkins').innerHTML = recentCheckins.length > 0
-                ? recentCheckins.map(c => {
-                    const actionTime = c.checkInTime || c.time;
-                    return `<li><b>@${c.user}</b> becsekkolt <span style="color:#64748b; font-size:0.8rem;">(${actionTime})</span></li>`;
-                }).join('')
-                : '<li>Nincs friss aktivitás.</li>';
+                ? recentCheckins.map(c => `<li><b>@${c.user}</b> becsekkolt <span style="color:#64748b; font-size:0.8rem;">(${c.checkInTime || c.time})</span></li>`).join('') : '<li>Nincs friss aktivitás.</li>';
         }
 
-        function renderUsersList() {
-            if (appState.jsonUsers.length > 0) {
-                _drawUsersTable();
-            }
-        }
+        // --- FELHASZNÁLÓK: LISTÁZÁS ÉS TÖRLÉS ---
+        function renderUsersList() { if (appState.jsonUsers.length > 0) _drawUsersTable(); }
 
         function _drawUsersTable() {
-            const allAvailableUsers = [...appState.jsonUsers, ...appState.localUsers];
-            document.getElementById('users-table-body').innerHTML = allAvailableUsers.map(u =>
-                `<tr><td>🔑 ${u.username}</td><td><span class="badge ${u.role === 'Superadmin' || u.role === 'Adminisztrátor' ? 'badge-admin' : 'badge-done'}">${u.role}</span></td></tr>`
-            ).join('');
+            const tbody = document.getElementById('users-table-body');
+            let html = appState.jsonUsers.map(u => `<tr><td>🔑 ${u.username}</td><td><span class="badge ${u.role === 'Superadmin' ? 'badge-admin' : 'badge-done'}">${u.role}</span></td><td><span style="color:#64748b;font-size:0.8rem;">Fix fiók</span></td></tr>`).join('');
+
+            html += appState.localUsers.map((u, index) => `<tr>
+                <td>👤 ${u.username}</td>
+                <td><span class="badge badge-active">${u.role}</span></td>
+                <td><button class="btn-danger admin-only" onclick="deleteLocalUser(${index})">Törlés</button></td>
+            </tr>`).join('');
+
+            tbody.innerHTML = html;
         }
 
         function addNewUser() {
-            const u = document.getElementById('new-sys-user').value;
-            const p = document.getElementById('new-sys-pass').value;
-            const r = document.getElementById('new-sys-role').value;
-
+            const u = document.getElementById('new-sys-user').value; const p = document.getElementById('new-sys-pass').value; const r = document.getElementById('new-sys-role').value;
             if (u && p) {
-                appState.localUsers.push({ username: u, role: r, encodedPassword: btoa(p) });
-                saveLocalUsers();
-                _drawUsersTable();
-                updateSystemDashboard();
+                appState.localUsers.push({ username: u, role: r, encodedPassword: btoa(p) }); saveLocalUsers(); _drawUsersTable(); updateSystemDashboard();
+                document.getElementById('new-sys-user').value = ''; document.getElementById('new-sys-pass').value = ''; alert(`✅ A(z) ${u} nevű fiók sikeresen létrejött!`);
+            } else { alert("Kérlek, adj meg felhasználónevet és jelszót is!"); }
+        }
 
-                document.getElementById('new-sys-user').value = '';
-                document.getElementById('new-sys-pass').value = '';
-                alert(`✅ A(z) ${u} nevű fiók sikeresen létrejött!`);
-            } else {
-                alert("Kérlek, adj meg felhasználónevet és jelszót is!");
+        function deleteLocalUser(index) {
+            if (confirm(`Biztosan törlöd a(z) ${appState.localUsers[index].username} nevű felhasználót?`)) {
+                appState.localUsers.splice(index, 1); saveLocalUsers(); _drawUsersTable(); updateSystemDashboard();
             }
         }
 
         function renderCheckinLog() {
             document.getElementById('checkin-log-table').innerHTML = appState.checkins.map(c => {
-                // Visszafelé kompatibilitás a régi "time" mezővel, plusz az új CheckIn és CheckOut kezelése
                 const inTime = c.checkInTime || c.time || 'Ismeretlen';
                 const outTime = c.checkOutTime ? `🏁 ${c.checkOutTime}` : '<span style="color:#38bdf8;">Folyamatban...</span>';
-
                 return `<tr><td><b>@${c.user}</b></td><td>${c.role}</td><td>🕒 ${inTime}</td><td>${outTime}</td></tr>`;
             }).join('') || '<tr><td colspan="4">Nincsenek rögzített becsekkolások a felhőben.</td></tr>';
         }
 
-        // --- 6. ESEMÉNYEK KEZELÉSE ---
+        // --- ESEMÉNYEK ---
         function renderEventsList() {
             const isAdmin = appState.currentUser && appState.currentUser.role === 'Superadmin';
-            const tbody = document.getElementById('events-table-body');
-            const sortedEvents = [...appState.events].sort((a, b) => (a.status === 'Lezajlott' ? 1 : -1));
-
-            tbody.innerHTML = sortedEvents.map(evt => {
+            document.getElementById('events-table-body').innerHTML = [...appState.events].sort((a, b) => (a.status === 'Lezajlott' ? 1 : -1)).map(evt => {
                 const isDone = evt.status === 'Lezajlott';
                 return `<tr class="${isDone ? 'event-completed' : ''}">
-                    <td style="font-weight: 600;">${isDone ? '🔒' : '✨'} ${evt.name}</td>
-                    <td>📅 ${evt.date}</td>
-                    <td><span class="badge ${isDone ? 'badge-done' : 'badge-active'}">${evt.status}</span></td>
+                    <td style="font-weight: 600;">${isDone ? '🔒' : '✨'} ${evt.name}</td><td>📅 ${evt.date}</td><td><span class="badge ${isDone ? 'badge-done' : 'badge-active'}">${evt.status}</span></td>
                     <td style="display: flex; gap: 5px;">
                         <button class="btn-secondary" onclick="openEventWorkspace(${evt.id})">Megnyitás</button>
                         ${(!isDone && isAdmin) ? `<button class="btn-secondary" onclick="archiveEvent(${evt.id})">Lezárás</button>` : ''}
                         ${isAdmin ? `<button class="btn-danger" onclick="deleteEvent(${evt.id})">Törlés</button>` : ''}
-                    </td>
-                </tr>`;
+                    </td></tr>`;
             }).join('');
             updateSystemDashboard();
         }
 
-        function showAddEventModal() {
-            const title = prompt("Új esemény neve:");
-            if (title) { appState.events.push({ id: Date.now(), name: title, date: "Tervezés alatt", status: "Aktív", staff: [], inventory: { audio: [], lighting: [] }, program: [] }); saveData(); renderEventsList(); }
-        }
-        function archiveEvent(eventId) { const evt = appState.events.find(e => e.id === eventId); if (evt) { evt.status = "Lezajlott"; saveData(); renderEventsList(); } }
-        function deleteEvent(eventId) {
-            if (confirm("Biztosan törölni szeretnéd ezt az eseményt?")) {
-                appState.events = appState.events.filter(e => e.id !== eventId);
-                saveData(); renderEventsList();
-            }
-        }
+        function showAddEventModal() { const title = prompt("Új esemény neve:"); if (title) { appState.events.push({ id: Date.now(), name: title, date: "Tervezés alatt", status: "Aktív", staff: [], inventory: { audio: [], lighting: [], other: [] }, program: [] }); saveData(); } }
+        function archiveEvent(eventId) { const evt = appState.events.find(e => e.id === eventId); if (evt) { evt.status = "Lezajlott"; saveData(); } }
+        function deleteEvent(eventId) { if (confirm("Biztosan törölni szeretnéd ezt az eseményt?")) { appState.events = appState.events.filter(e => e.id !== eventId); saveData(); } }
 
-        function openEventWorkspace(eventId) {
-            appState.activeEventId = eventId;
-            renderEventSubSections();
-            switchMainTab('event-detail-panel');
-        }
-
-        function switchEventSubTab(subTabId) {
-            document.querySelectorAll('.event-tab-btn').forEach(btn => btn.classList.remove('active'));
-            document.querySelectorAll('.event-sub-section').forEach(sec => sec.classList.remove('active'));
-            event.currentTarget.classList.add('active');
-            document.getElementById(subTabId).classList.add('active');
-        }
-
-        function updateEventSettings() {
-            const newDate = document.getElementById('edit-event-date').value;
-            const newStatus = document.getElementById('edit-event-status').value;
-            const evt = appState.events.find(e => e.id === appState.activeEventId);
-            evt.date = newDate; evt.status = newStatus;
-            saveData(); renderEventSubSections(); renderEventsList(); alert("✅ Beállítások sikeresen elmentve!");
-        }
+        function openEventWorkspace(eventId) { appState.activeEventId = eventId; renderEventSubSections(); switchMainTab('event-detail-panel'); }
+        function switchEventSubTab(subTabId) { document.querySelectorAll('.event-tab-btn').forEach(b => b.classList.remove('active')); document.querySelectorAll('.event-sub-section').forEach(s => s.classList.remove('active')); event.currentTarget.classList.add('active'); document.getElementById(subTabId).classList.add('active'); }
+        function updateEventSettings() { const evt = appState.events.find(e => e.id === appState.activeEventId); evt.date = document.getElementById('edit-event-date').value; evt.status = document.getElementById('edit-event-status').value; saveData(); alert("✅ Beállítások sikeresen elmentve!"); }
 
         function renderEventSubSections() {
             const evt = appState.events.find(e => e.id === appState.activeEventId);
+            if (!evt) return;
+
+            // Biztosítjuk a visszafelé kompatibilitást az Egyéb kategóriának
+            evt.inventory.other = evt.inventory.other || [];
+
             document.getElementById('active-event-title').innerText = evt.name;
             document.getElementById('active-event-meta').innerText = `Státusz: ${evt.status} | Dátum: ${evt.date}`;
             document.getElementById('edit-event-date').value = evt.date;
 
-            const statusSelect = document.getElementById('edit-event-status');
-            if (!Array.from(statusSelect.options).some(opt => opt.value === evt.status)) { statusSelect.add(new Option(evt.status, evt.status)); }
-            statusSelect.value = evt.status;
+            const sel = document.getElementById('edit-event-status');
+            if (!Array.from(sel.options).some(o => o.value === evt.status)) { sel.add(new Option(evt.status, evt.status)); } sel.value = evt.status;
 
-            document.getElementById('stat-staff').innerText = evt.staff.length;
-            document.getElementById('stat-audio').innerText = evt.inventory.audio.length;
-            document.getElementById('stat-light').innerText = evt.inventory.lighting.length;
-            document.getElementById('stat-dj').innerText = evt.program.length;
+            document.getElementById('stat-staff').innerText = evt.staff.length; document.getElementById('stat-audio').innerText = evt.inventory.audio.length; document.getElementById('stat-light').innerText = evt.inventory.lighting.length; document.getElementById('stat-other').innerText = evt.inventory.other.length;
 
             document.getElementById('event-staff-table').innerHTML = evt.staff.map(s => `<tr><td><b>${s.name}</b></td><td>${s.role}</td></tr>`).join('');
             document.getElementById('event-audio-list').innerHTML = evt.inventory.audio.map(i => `<li>${i}</li>`).join('') || '<li>Nincs eszköz.</li>';
             document.getElementById('event-lighting-list').innerHTML = evt.inventory.lighting.map(i => `<li>${i}</li>`).join('') || '<li>Nincs eszköz.</li>';
-            document.getElementById('event-program-table').innerHTML = evt.program.map(p => `
-                <tr><td><b>${p.time}</b></td><td>⚡ ${p.dj}</td><td>${p.style}</td>
-                <td><button class="btn-primary" onclick="openTracklistInNewTab(${evt.id}, ${p.id})">🎵 Setlist ↗</button></td></tr>
-            `).join('');
+            document.getElementById('event-other-list').innerHTML = evt.inventory.other.map(i => `<li>${i}</li>`).join('') || '<li>Nincs eszköz.</li>';
+            document.getElementById('event-program-table').innerHTML = evt.program.map(p => `<tr><td><b>${p.time}</b></td><td>⚡ ${p.dj}</td><td>${p.style}</td><td><button class="btn-primary" onclick="openTracklistInNewTab(${evt.id}, ${p.id})">🎵 Setlist ↗</button></td></tr>`).join('');
         }
 
-        function addStaffToEvent() {
-            const name = document.getElementById('new-staff-name').value; const role = document.getElementById('new-staff-role').value;
-            if (name) { appState.events.find(e => e.id === appState.activeEventId).staff.push({ name, role }); saveData(); renderEventSubSections(); }
-        }
-        function addAssetToEvent() {
-            const type = document.getElementById('new-asset-type').value; const name = document.getElementById('new-asset-name').value;
-            if (name) { appState.events.find(e => e.id === appState.activeEventId).inventory[type].push(name); saveData(); renderEventSubSections(); }
-        }
-        function addProgramToEvent() {
-            const time = document.getElementById('new-prog-time').value; const dj = document.getElementById('new-prog-dj').value; const style = document.getElementById('new-prog-style').value;
-            if (time && dj) { appState.events.find(e => e.id === appState.activeEventId).program.push({ id: Date.now(), time, dj, style, tracks: [] }); saveData(); renderEventSubSections(); }
-        }
+        function addStaffToEvent() { const n = document.getElementById('new-staff-name').value; const r = document.getElementById('new-staff-role').value; if (n) { appState.events.find(e => e.id === appState.activeEventId).staff.push({ name: n, role: r }); saveData(); } }
+        function addAssetToEvent() { const t = document.getElementById('new-asset-type').value; const n = document.getElementById('new-asset-name').value; if (n) { const evt = appState.events.find(e => e.id === appState.activeEventId); evt.inventory[t] = evt.inventory[t] || []; evt.inventory[t].push(n); saveData(); } }
+        function addProgramToEvent() { const t = document.getElementById('new-prog-time').value; const d = document.getElementById('new-prog-dj').value; const s = document.getElementById('new-prog-style').value; if (t && d) { appState.events.find(e => e.id === appState.activeEventId).program.push({ id: Date.now(), time: t, dj: d, style: s, startedAt: null, stoppedAt: null, tracks: [] }); saveData(); } }
 
-        // --- 8. ÚJ LAPON NYÍLÓ SETLIST FUNKCIÓK ---
-        function openTracklistInNewTab(eventId, programId) {
-            window.open(`?view=setlist&eventId=${eventId}&programId=${programId}`, '_blank');
-        }
+        // --- ÚJ: SETLIST FUNKCIÓK ÉS IDŐZÍTŐ ---
+        let visualTimerInterval = null;
+
+        function openTracklistInNewTab(eventId, programId) { window.open(`?view=setlist&eventId=${eventId}&programId=${programId}`, '_blank'); }
 
         function renderTracklistPage() {
             const evt = appState.events.find(e => e.id === appState.activeEventId);
+            if (!evt) return;
             const prog = evt.program.find(p => p.id === appState.activeProgramId);
+            if (!prog) return;
+
             document.getElementById('tracklist-header-dj').innerText = `DJ ${prog.dj} - Setlist`;
             document.getElementById('tracklist-header-meta').innerText = `${evt.name} | ${prog.style} | ${prog.time}`;
 
-            document.getElementById('tracklist-table-body').innerHTML = prog.tracks.map((t, index) => `
-                <tr><td style="color: #64748b;">${index + 1}.</td><td style="font-weight: 600; color: #38bdf8;">${t.artist}</td><td>${t.title}</td></tr>
-            `).join('');
+            document.getElementById('tracklist-table-body').innerHTML = prog.tracks.map((t, index) => `<tr><td style="color: #64748b;">${index + 1}.</td><td style="font-weight: 600; color: #38bdf8;">${t.artist}</td><td>${t.title}</td></tr>`).join('');
+
+            // Időzítő UI beállítása
+            const statusEl = document.getElementById('setlist-timer-status');
+            if (prog.startedAt && !prog.stoppedAt) {
+                statusEl.innerText = `Indítva: ${prog.startedAt} | Jelenleg is fut!`;
+                statusEl.style.color = "#10b981";
+                startVisualTimer(); // Mivel a Setlist egy külön tab, a pontos másodperc mérése helyett csak jelzi a futást vizuálisan.
+            } else if (prog.startedAt && prog.stoppedAt) {
+                statusEl.innerText = `Leállítva: ${prog.stoppedAt}`;
+                statusEl.style.color = "#f87171";
+                clearInterval(visualTimerInterval);
+            } else {
+                statusEl.innerText = "Még nem indult el.";
+            }
+        }
+
+        // Stopper Gombok
+        function startSetlistTimer() {
+            const evt = appState.events.find(e => e.id === appState.activeEventId);
+            const prog = evt.program.find(p => p.id === appState.activeProgramId);
+            if (!prog.startedAt) {
+                const now = new Date();
+                prog.startedAt = `${now.toLocaleDateString('hu-HU')} ${now.toLocaleTimeString('hu-HU')}`;
+                saveData(); // Mentés a felhőbe
+                startVisualTimer();
+            }
+        }
+
+        function stopSetlistTimer() {
+            const evt = appState.events.find(e => e.id === appState.activeEventId);
+            const prog = evt.program.find(p => p.id === appState.activeProgramId);
+            if (prog.startedAt && !prog.stoppedAt) {
+                const now = new Date();
+                prog.stoppedAt = `${now.toLocaleDateString('hu-HU')} ${now.toLocaleTimeString('hu-HU')}`;
+                saveData(); // Mentés a felhőbe
+                clearInterval(visualTimerInterval);
+            }
+        }
+
+        // Vizuális, egyszerű léptető a Setlist tabon
+        function startVisualTimer() {
+            if (visualTimerInterval) clearInterval(visualTimerInterval);
+            let sec = 0;
+            const display = document.getElementById('setlist-timer-display');
+            visualTimerInterval = setInterval(() => {
+                sec++;
+                let h = Math.floor(sec / 3600); let m = Math.floor((sec % 3600) / 60); let s = sec % 60;
+                display.innerText = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            }, 1000);
         }
 
         function addTrackToSetlist() {
             const artist = document.getElementById('new-track-artist').value; const title = document.getElementById('new-track-title').value;
             if (artist && title) {
                 appState.events.find(e => e.id === appState.activeEventId).program.find(p => p.id === appState.activeProgramId).tracks.push({ artist, title });
-                saveData();
-                renderTracklistPage();
-                document.getElementById('new-track-artist').value = ''; document.getElementById('new-track-title').value = '';
+                saveData(); document.getElementById('new-track-artist').value = ''; document.getElementById('new-track-title').value = '';
             }
         }
 
-        // Szinkronizáció más fülekkel
-        window.addEventListener('storage', function (e) {
-            if (e.key === 'mixademy_events') {
-                appState.events = JSON.parse(e.newValue);
-                if (document.getElementById('event-detail-panel').classList.contains('active')) renderEventSubSections();
-                renderEventsList();
-            }
-        });
+        // --- ÚJ: TXT TRACKLIST IMPORT ---
+        function importTracklistTxt(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const lines = e.target.result.split('\n');
+                const prog = appState.events.find(ev => ev.id === appState.activeEventId).program.find(p => p.id === appState.activeProgramId);
+                let added = 0;
+
+                lines.forEach(line => {
+                    const parts = line.split('-'); // Szétválasztjuk a "-" jelnél
+                    if (parts.length >= 2) {
+                        const artist = parts[0].trim();
+                        const title = parts.slice(1).join('-').trim(); // Ha a címben is van kötőjel, azt egybetartja
+                        prog.tracks.push({ artist, title });
+                        added++;
+                    }
+                });
+
+                if (added > 0) {
+                    saveData();
+                    alert(`✅ Sikeresen importálva ${added} zeneszám a Setlistbe!`);
+                } else {
+                    alert("Hibás TXT formátum! A fájlban soronként 'Előadó - Cím' formátumot használj.");
+                }
+
+                // Input mező ürítése, hogy újra lehessen ugyanazt a fájlt választani
+                document.getElementById('import-tracklist-file').value = '';
+            };
+            reader.readAsText(file);
+        }
 
         // --- GLOBALIZÁLÁS ---
-        window.authenticateUser = authenticateUser;
-        window.toggleCheckin = toggleCheckin;
-        window.logoutUser = logoutUser;
-        window.switchMainTab = switchMainTab;
-        window.clearCheckinLog = clearCheckinLog;
-        window.refreshCheckinLog = refreshCheckinLog;
-        window.exportCheckinsToTxt = exportCheckinsToTxt;
-        window.showAddEventModal = showAddEventModal;
-        window.archiveEvent = archiveEvent;
-        window.deleteEvent = deleteEvent;
-        window.openEventWorkspace = openEventWorkspace;
-        window.switchEventSubTab = switchEventSubTab;
-        window.updateEventSettings = updateEventSettings;
-        window.addStaffToEvent = addStaffToEvent;
-        window.addAssetToEvent = addAssetToEvent;
-        window.addProgramToEvent = addProgramToEvent;
-        window.openTracklistInNewTab = openTracklistInNewTab;
-        window.addTrackToSetlist = addTrackToSetlist;
-        window.addNewUser = addNewUser;
+        window.authenticateUser = authenticateUser; window.toggleCheckin = toggleCheckin; window.logoutUser = logoutUser; window.switchMainTab = switchMainTab;
+        window.clearCheckinLog = clearCheckinLog; window.refreshCheckinLog = refreshCheckinLog; window.exportCheckinsToTxt = exportCheckinsToTxt;
+        window.showAddEventModal = showAddEventModal; window.archiveEvent = archiveEvent; window.deleteEvent = deleteEvent;
+        window.openEventWorkspace = openEventWorkspace; window.switchEventSubTab = switchEventSubTab; window.updateEventSettings = updateEventSettings;
+        window.addStaffToEvent = addStaffToEvent; window.addAssetToEvent = addAssetToEvent; window.addProgramToEvent = addProgramToEvent;
+        window.openTracklistInNewTab = openTracklistInNewTab; window.addTrackToSetlist = addTrackToSetlist;
+        window.addNewUser = addNewUser; window.deleteLocalUser = deleteLocalUser; window.exportEventData = exportEventData;
+        window.startSetlistTimer = startSetlistTimer; window.stopSetlistTimer = stopSetlistTimer; window.importTracklistTxt = importTracklistTxt;
     </script>
 </body>
 
