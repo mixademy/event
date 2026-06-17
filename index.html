@@ -566,10 +566,11 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
                     <div>
                         <h2>Jelenléti Napló (Admin nézet)</h2>
-                        <p style="color: #64748b; font-size: 0.9rem;">A rendszer rögzíti, hogy a felhasználók mikor
-                            kezdték meg a munkát a platformon.</p>
+                        <p style="color: #64748b; font-size: 0.9rem;">Élő szinkronizáció a Firebase Firestore felhőből.
+                        </p>
                     </div>
-                    <button class="btn-danger admin-only" onclick="clearCheckinLog()">🗑️ Napló ürítése</button>
+                    <button class="btn-danger admin-only" onclick="clearCheckinLog()">🗑️ Napló ürítése a
+                        felhőből</button>
                 </div>
                 <div class="glass-card">
                     <table>
@@ -637,7 +638,24 @@
         </div>
     </div>
 
-    <script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, deleteDoc, getDocs }
+            from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        // A BEILLESZTETT FIREBASE CONFIGURÁCIÓ
+        const firebaseConfig = {
+            apiKey: "AIzaSyD9p3wAII0V0uAKpLwsPSqDOJTZFjJlQQU",
+            authDomain: "mixademy-event.firebaseapp.com",
+            projectId: "mixademy-event",
+            storageBucket: "mixademy-event.firebasestorage.app",
+            messagingSenderId: "428262319146",
+            appId: "1:428262319146:web:a8d34c27a398ed24814f53"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
         // --- 1. ADATBÁZIS & LOCAL STORAGE INICIALIZÁLÁS ---
         const defaultEvents = [{
             id: 1, name: "Neon City Showcase", date: "2026. Július 10.", status: "Aktív",
@@ -648,7 +666,7 @@
 
         let appState = {
             events: JSON.parse(localStorage.getItem('mixademy_events')) || defaultEvents,
-            checkins: JSON.parse(localStorage.getItem('mixademy_checkins')) || [],
+            checkins: [], // Ezt mostantól a Firebase tölti be
             users: [],
             currentUser: JSON.parse(localStorage.getItem('mixademy_currentUser')) || null,
             activeEventId: null,
@@ -657,10 +675,23 @@
 
         function saveData() {
             localStorage.setItem('mixademy_events', JSON.stringify(appState.events));
-            localStorage.setItem('mixademy_checkins', JSON.stringify(appState.checkins));
         }
 
-        // --- 2. ROUTING (A normál app vagy az új Setlist lap nyílik meg?) ---
+        // --- FIREBASE REALTIME LISTENER A BECSEKKOLÁSOKHOZ ---
+        const checkinsRef = collection(db, "checkins");
+        const q = query(checkinsRef, orderBy("createdAt", "desc"));
+
+        onSnapshot(q, (snapshot) => {
+            appState.checkins = [];
+            snapshot.forEach((doc) => {
+                appState.checkins.push({ id: doc.id, ...doc.data() });
+            });
+            if (document.getElementById('checkin-log-panel').classList.contains('active')) {
+                renderCheckinLog();
+            }
+        });
+
+        // --- 2. ROUTING ---
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('view') === 'setlist') {
             appState.activeEventId = parseInt(urlParams.get('eventId'));
@@ -677,7 +708,7 @@
             }
         }
 
-        // --- 3. HITELESÍTÉS & CHECK-IN ---
+        // --- 3. HITELESÍTÉS & FIREBASE CHECK-IN ---
         async function authenticateUser() {
             const u = document.getElementById('login-username').value;
             const p = document.getElementById('login-password').value;
@@ -704,31 +735,37 @@
                     errorMsg.style.display = 'block';
                 }
             } catch (error) {
-                errorMsg.innerText = "Rendszerhiba: Helyi szerver szükséges a users.json olvasásához!";
+                errorMsg.innerText = "Rendszerhiba a hitelesítés során!";
                 errorMsg.style.display = 'block';
             }
         }
 
-        function performCheckIn() {
+        async function performCheckIn() {
             const now = new Date();
             const timeStr = now.toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
             const dateStr = now.toLocaleDateString('hu-HU');
 
-            appState.checkins.unshift({
-                user: appState.currentUser.username,
-                role: appState.currentUser.role,
-                time: `${dateStr} ${timeStr}`
-            });
-            saveData();
+            try {
+                // BEKÜLDÉS A FIREBASE-BE
+                await addDoc(collection(db, "checkins"), {
+                    user: appState.currentUser.username,
+                    role: appState.currentUser.role,
+                    time: `${dateStr} ${timeStr}`,
+                    createdAt: serverTimestamp()
+                });
 
-            document.getElementById('checkin-view').style.display = 'none';
-            document.getElementById('app-view').style.display = 'flex';
-            document.getElementById('sidebar-username').innerText = appState.currentUser.username;
-            document.getElementById('sidebar-role').innerText = appState.currentUser.role;
-            document.getElementById('sidebar-time').innerText = timeStr;
+                document.getElementById('checkin-view').style.display = 'none';
+                document.getElementById('app-view').style.display = 'flex';
+                document.getElementById('sidebar-username').innerText = appState.currentUser.username;
+                document.getElementById('sidebar-role').innerText = appState.currentUser.role;
+                document.getElementById('sidebar-time').innerText = timeStr;
 
-            applyRBAC();
-            initApp();
+                applyRBAC();
+                initApp();
+            } catch (e) {
+                console.error("Firebase hiba: ", e);
+                alert("Nem sikerült kapcsolódni az adatbázishoz!");
+            }
         }
 
         function logoutUser() {
@@ -764,18 +801,22 @@
             if (panelId === 'global-users-panel') document.getElementById('nav-users').classList.add('active');
         }
 
-        // --- Jelenléti Napló (Kezelés) ---
         function renderCheckinLog() {
             document.getElementById('checkin-log-table').innerHTML = appState.checkins.map(c =>
                 `<tr><td><b>@${c.user}</b></td><td>${c.role}</td><td>🕒 ${c.time}</td></tr>`
-            ).join('') || '<tr><td colspan="3">Nincsenek rögzített becsekkolások.</td></tr>';
+            ).join('') || '<tr><td colspan="3">Nincsenek rögzített becsekkolások a felhőben.</td></tr>';
         }
 
-        function clearCheckinLog() {
-            if (confirm("Biztosan törlöd a teljes jelenléti naplót? A művelet nem vonható vissza.")) {
-                appState.checkins = [];
-                saveData();
-                renderCheckinLog();
+        async function clearCheckinLog() {
+            if (confirm("Biztosan törlöd a teljes jelenléti naplót a felhőből? A művelet nem vonható vissza.")) {
+                try {
+                    const querySnapshot = await getDocs(collection(db, "checkins"));
+                    querySnapshot.forEach(async (document) => {
+                        await deleteDoc(document.ref);
+                    });
+                } catch (e) {
+                    console.error("Hiba a törlésnél: ", e);
+                }
             }
         }
 
@@ -812,7 +853,6 @@
             }
         }
 
-        // --- 7. ESEMÉNY BELSŐ TERE & DASHBOARD ---
         function openEventWorkspace(eventId) {
             appState.activeEventId = eventId;
             renderEventSubSections();
@@ -830,39 +870,25 @@
             const newDate = document.getElementById('edit-event-date').value;
             const newStatus = document.getElementById('edit-event-status').value;
             const evt = appState.events.find(e => e.id === appState.activeEventId);
-
-            evt.date = newDate;
-            evt.status = newStatus;
-
-            saveData();
-            renderEventSubSections(); // Frissíti a belső nézet fejléceit
-            renderEventsList();       // Frissíti a főoldali listát
-            alert("✅ Beállítások sikeresen elmentve!");
+            evt.date = newDate; evt.status = newStatus;
+            saveData(); renderEventSubSections(); renderEventsList(); alert("✅ Beállítások sikeresen elmentve!");
         }
 
         function renderEventSubSections() {
             const evt = appState.events.find(e => e.id === appState.activeEventId);
-
-            // Fejléc
             document.getElementById('active-event-title').innerText = evt.name;
             document.getElementById('active-event-meta').innerText = `Státusz: ${evt.status} | Dátum: ${evt.date}`;
-
-            // Dashboard Űrlap kitöltése az aktuális adatokkal
             document.getElementById('edit-event-date').value = evt.date;
 
             const statusSelect = document.getElementById('edit-event-status');
-            if (!Array.from(statusSelect.options).some(opt => opt.value === evt.status)) {
-                statusSelect.add(new Option(evt.status, evt.status));
-            }
+            if (!Array.from(statusSelect.options).some(opt => opt.value === evt.status)) { statusSelect.add(new Option(evt.status, evt.status)); }
             statusSelect.value = evt.status;
 
-            // Statisztikák
             document.getElementById('stat-staff').innerText = evt.staff.length;
             document.getElementById('stat-audio').innerText = evt.inventory.audio.length;
             document.getElementById('stat-light').innerText = evt.inventory.lighting.length;
             document.getElementById('stat-dj').innerText = evt.program.length;
 
-            // Listák
             document.getElementById('event-staff-table').innerHTML = evt.staff.map(s => `<tr><td><b>${s.name}</b></td><td>${s.role}</td></tr>`).join('');
             document.getElementById('event-audio-list').innerHTML = evt.inventory.audio.map(i => `<li>${i}</li>`).join('') || '<li>Nincs eszköz.</li>';
             document.getElementById('event-lighting-list').innerHTML = evt.inventory.lighting.map(i => `<li>${i}</li>`).join('') || '<li>Nincs eszköz.</li>';
@@ -872,7 +898,6 @@
             `).join('');
         }
 
-        // Hozzáadások
         function addStaffToEvent() {
             const name = document.getElementById('new-staff-name').value; const role = document.getElementById('new-staff-role').value;
             if (name) { appState.events.find(e => e.id === appState.activeEventId).staff.push({ name, role }); saveData(); renderEventSubSections(); }
@@ -912,18 +937,32 @@
             }
         }
 
-        // --- Szinkronizáció más fülekkel ---
+        // Szinkronizáció más fülekkel
         window.addEventListener('storage', function (e) {
             if (e.key === 'mixademy_events') {
                 appState.events = JSON.parse(e.newValue);
                 if (document.getElementById('event-detail-panel').classList.contains('active')) renderEventSubSections();
                 renderEventsList();
             }
-            if (e.key === 'mixademy_checkins') {
-                appState.checkins = JSON.parse(e.newValue);
-                if (document.getElementById('checkin-log-panel').classList.contains('active')) renderCheckinLog();
-            }
         });
+
+        // --- GLOBALIZÁLÁS (Gombok elérése a HTML-ből) ---
+        window.authenticateUser = authenticateUser;
+        window.performCheckIn = performCheckIn;
+        window.logoutUser = logoutUser;
+        window.switchMainTab = switchMainTab;
+        window.clearCheckinLog = clearCheckinLog;
+        window.showAddEventModal = showAddEventModal;
+        window.archiveEvent = archiveEvent;
+        window.deleteEvent = deleteEvent;
+        window.openEventWorkspace = openEventWorkspace;
+        window.switchEventSubTab = switchEventSubTab;
+        window.updateEventSettings = updateEventSettings;
+        window.addStaffToEvent = addStaffToEvent;
+        window.addAssetToEvent = addAssetToEvent;
+        window.addProgramToEvent = addProgramToEvent;
+        window.openTracklistInNewTab = openTracklistInNewTab;
+        window.addTrackToSetlist = addTrackToSetlist;
     </script>
 </body>
 
