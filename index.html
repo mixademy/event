@@ -109,11 +109,12 @@
             .event-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
             .main-panel > div:first-child { flex-direction: column; align-items: flex-start !important; gap: 15px; }
             
-            /* Mobilos chat kiegészítés */
+            /* Mobilos chat kiegészítés és gombfelirat elrejtés */
             #chat-layout-wrapper { flex-direction: column !important; height: auto !important; min-height: 70vh; }
             #chat-sidebar-col { width: 100% !important; border-right: none !important; border-bottom: 1px solid #334155; }
             #chat-room-list { max-height: 120px; overflow-y: auto; }
             #chat-main-col { flex: 1; height: 50vh; }
+            .chat-btn-text { display: none; }
         }
         @media (max-width: 600px) {
             #login-view { padding: 30px 20px; }
@@ -352,7 +353,7 @@
                 </div>
                 
                 <div class="ui-card" style="padding: 0; overflow: hidden;">
-                    <div id="chat-layout-wrapper" style="display: flex; height: 60vh;">
+                    <div id="chat-layout-wrapper" style="display: flex; height: calc(96vh - 200px);">
                         
                         <div id="chat-sidebar-col" style="width: 250px; background: #0f172a; border-right: 1px solid #334155; display: flex; flex-direction: column;">
                             <div style="padding: 15px; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center;">
@@ -368,8 +369,8 @@
                             <div style="padding: 15px 20px; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.1);">
                                 <h3 id="chat-active-room-title" style="margin: 0; font-size: 1.1rem; color: #38bdf8;">Betöltés...</h3>
                                 <div style="display: flex; gap: 10px;">
-                                    <button id="chat-clear-messages-btn" class="btn-secondary admin-only" style="padding: 5px 10px; font-size: 0.75rem; display: none;" onclick="clearChatMessages()">🧹 Üzenetek törlése</button>
-                                    <button id="chat-delete-room-btn" class="btn-danger admin-only" style="padding: 5px 10px; font-size: 0.75rem; display: none;" onclick="deleteActiveChatRoom()">🗑️ Szoba Törlése</button>
+                                    <button id="chat-clear-messages-btn" class="btn-secondary admin-only" style="padding: 5px 10px; font-size: 0.75rem; display: none;" onclick="clearChatMessages()">🧹 <span class="chat-btn-text">Üzenetek törlése</span></button>
+                                    <button id="chat-delete-room-btn" class="btn-danger admin-only" style="padding: 5px 10px; font-size: 0.75rem; display: none;" onclick="deleteActiveChatRoom()">🗑️ <span class="chat-btn-text">Szoba Törlése</span></button>
                                 </div>
                             </div>
                             
@@ -934,7 +935,7 @@
 
                 appState.localUsers.push({ username: u, role: r, encodedPassword: btoa(p) }); saveLocalUsers(); _drawUsersTable(); updateSystemDashboard();
                 document.getElementById('new-sys-user').value = ''; document.getElementById('new-sys-pass').value = ''; alert(`✅ A(z) ${u} nevű fiók sikeresen létrejött!`);
-            } else { alert("Kérlek, adj meg felhasználónevet és jelszót is!"); }
+            } else { alert("Kérlek, adj meg felhasználónevet és jelszót भी!"); }
         }
 
         function deleteLocalUser(index) {
