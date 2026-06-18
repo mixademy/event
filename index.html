@@ -396,6 +396,28 @@
             text-decoration: none;
         }
 
+        /* CHAT CSS */
+        .chat-room-btn {
+            padding: 10px;
+            border-radius: 8px;
+            background: transparent;
+            cursor: pointer;
+            color: #94a3b8;
+            text-align: left;
+            font-weight: 500;
+            transition: 0.2s;
+        }
+
+        .chat-room-btn:hover {
+            background: #1e293b;
+            color: #f8fafc;
+        }
+
+        .chat-room-btn.active {
+            background: #38bdf8;
+            color: #0f172a;
+        }
+
         @media (max-width: 900px) {
             #app-view {
                 flex-direction: column;
@@ -468,6 +490,29 @@
                 align-items: flex-start !important;
                 gap: 15px;
             }
+
+            /* Mobilos chat kiegészítés */
+            #chat-layout-wrapper {
+                flex-direction: column !important;
+                height: auto !important;
+                min-height: 70vh;
+            }
+
+            #chat-sidebar-col {
+                width: 100% !important;
+                border-right: none !important;
+                border-bottom: 1px solid #334155;
+            }
+
+            #chat-room-list {
+                max-height: 120px;
+                overflow-y: auto;
+            }
+
+            #chat-main-col {
+                flex: 1;
+                height: 50vh;
+            }
         }
 
         @media (max-width: 600px) {
@@ -527,6 +572,9 @@
                 </div>
                 <div class="nav-link admin-only" id="nav-users" onclick="switchMainTab('global-users-panel')">👤
                     Felhasználók</div>
+
+                <div class="nav-link" id="nav-chat" onclick="switchMainTab('chat-panel')">💬 Belső Chat</div>
+
                 <div class="nav-link admin-only" id="nav-verify" onclick="switchMainTab('verify-panel')">🛂 Igazoltatás
                 </div>
 
@@ -839,6 +887,58 @@
                 </div>
             </div>
 
+            <div id="chat-panel" class="main-panel">
+                <div style="margin-bottom: 30px;">
+                    <h2>💬 Belső Chat</h2>
+                    <p style="color: #94a3b8; font-size: 0.9rem;">Valós idejű kommunikáció a stáb és a szervezők között.
+                    </p>
+                </div>
+
+                <div class="ui-card" style="padding: 0; overflow: hidden;">
+                    <div id="chat-layout-wrapper" style="display: flex; height: 60vh;">
+
+                        <div id="chat-sidebar-col"
+                            style="width: 250px; background: #0f172a; border-right: 1px solid #334155; display: flex; flex-direction: column;">
+                            <div
+                                style="padding: 15px; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center;">
+                                <h3 style="font-size: 1rem; margin: 0;">Szobák</h3>
+                                <button class="btn-secondary" style="padding: 5px 10px; font-size: 0.75rem;"
+                                    onclick="createChatRoom()">+ Új</button>
+                            </div>
+                            <div id="chat-room-list"
+                                style="flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 5px;">
+                            </div>
+                        </div>
+
+                        <div id="chat-main-col"
+                            style="flex: 1; display: flex; flex-direction: column; background: #1e293b; position: relative;">
+
+                            <div
+                                style="padding: 15px 20px; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.1);">
+                                <h3 id="chat-active-room-title" style="margin: 0; font-size: 1.1rem; color: #38bdf8;">
+                                    Betöltés...</h3>
+                                <button id="chat-delete-room-btn" class="btn-danger admin-only"
+                                    style="padding: 5px 10px; font-size: 0.75rem; display: none;"
+                                    onclick="deleteActiveChatRoom()">🗑️ Szoba Törlése</button>
+                            </div>
+
+                            <div id="chat-messages-container"
+                                style="flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px;">
+                            </div>
+
+                            <div
+                                style="padding: 15px; border-top: 1px solid #334155; background: #0f172a; display: flex; gap: 10px;">
+                                <input type="text" id="chat-input-text" placeholder="Írj egy üzenetet..."
+                                    style="margin: 0; flex: 1; background: #1e293b;"
+                                    onkeypress="if(event.key === 'Enter') sendChatMessage()">
+                                <button class="btn-primary" onclick="sendChatMessage()">Küldés ↗</button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
             <div id="verify-panel" class="main-panel">
                 <div style="margin-bottom: 30px;">
                     <h2>🛂 Stáb Igazoltatás</h2>
@@ -959,7 +1059,10 @@
             jsonUsers: [],
             currentUser: JSON.parse(localStorage.getItem('mixademy_currentUser')) || null,
             activeEventId: null,
-            activeProgramId: null
+            activeProgramId: null,
+            chatRooms: [],
+            chatMessages: [],
+            activeChatRoomId: null
         };
 
         window.toggleMobileMenu = function () {
@@ -967,9 +1070,8 @@
             menuContent.classList.toggle('open');
         }
 
-        // --- ESEMÉNYEK SZINKRONIZÁLÁSA FIREBASE-BE ---
+        // --- FIREBASE SZINKRONIZÁCIÓ (Események, Chat, Napló) ---
         const eventsDocRef = doc(db, "system", "global_events");
-
         onSnapshot(eventsDocRef, (docSnap) => {
             if (docSnap.exists()) {
                 appState.events = docSnap.data().list || [];
@@ -979,14 +1081,30 @@
             }
         });
 
-        async function saveData() {
-            try { await setDoc(eventsDocRef, { list: appState.events }); }
-            catch (e) { localStorage.setItem('mixademy_events', JSON.stringify(appState.events)); }
-        }
+        // ÚJ: CHAT SZOBA SZINKRON
+        const chatRoomsDocRef = doc(db, "system", "global_chat_rooms");
+        onSnapshot(chatRoomsDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+                appState.chatRooms = docSnap.data().list || [{ id: 'general', name: 'Általános' }];
+            } else {
+                appState.chatRooms = [{ id: 'general', name: 'Általános' }];
+                setDoc(chatRoomsDocRef, { list: appState.chatRooms });
+            }
+            if (!appState.activeChatRoomId && appState.chatRooms.length > 0) {
+                appState.activeChatRoomId = appState.chatRooms[0].id;
+            }
+            if (document.getElementById('chat-panel').classList.contains('active')) renderChatUI();
+        });
 
-        function saveLocalUsers() { localStorage.setItem('mixademy_local_users', JSON.stringify(appState.localUsers)); }
+        // ÚJ: CHAT ÜZENETEK SZINKRON
+        const chatMessagesRef = collection(db, "chat_messages");
+        const chatQ = query(chatMessagesRef, orderBy("createdAt", "asc"));
+        onSnapshot(chatQ, (snapshot) => {
+            appState.chatMessages = [];
+            snapshot.forEach((d) => { appState.chatMessages.push({ id: d.id, ...d.data() }); });
+            if (document.getElementById('chat-panel').classList.contains('active')) renderChatMessages();
+        });
 
-        // --- FIREBASE JELENLÉTI NAPLÓ SZINKRON ---
         const checkinsRef = collection(db, "checkins");
         const q = query(checkinsRef, orderBy("createdAt", "desc"));
         onSnapshot(q, (snapshot) => {
@@ -996,6 +1114,112 @@
             if (document.getElementById('checkin-log-panel').classList.contains('active')) renderCheckinLog();
         });
 
+        async function saveData() {
+            try { await setDoc(eventsDocRef, { list: appState.events }); }
+            catch (e) { localStorage.setItem('mixademy_events', JSON.stringify(appState.events)); }
+        }
+        async function saveChatRooms() {
+            try { await setDoc(chatRoomsDocRef, { list: appState.chatRooms }); }
+            catch (e) { console.error(e); }
+        }
+        function saveLocalUsers() { localStorage.setItem('mixademy_local_users', JSON.stringify(appState.localUsers)); }
+
+        // --- CHAT FUNKCIÓK ---
+        function createChatRoom() {
+            const name = prompt("Add meg az új chatszoba nevét:");
+            if (name) {
+                const newId = 'room_' + Date.now();
+                appState.chatRooms.push({ id: newId, name: name });
+                saveChatRooms();
+                appState.activeChatRoomId = newId;
+                renderChatUI();
+            }
+        }
+
+        function deleteActiveChatRoom() {
+            if (appState.activeChatRoomId === 'general') { alert("Az Általános szobát nem lehet törölni!"); return; }
+            if (confirm("Biztosan törlöd ezt a chatszobát?")) {
+                appState.chatRooms = appState.chatRooms.filter(r => r.id !== appState.activeChatRoomId);
+                appState.activeChatRoomId = 'general';
+                saveChatRooms();
+                renderChatUI();
+            }
+        }
+
+        function switchChatRoom(roomId) {
+            appState.activeChatRoomId = roomId;
+            renderChatUI();
+        }
+
+        function sendChatMessage() {
+            const input = document.getElementById('chat-input-text');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const now = new Date();
+            const timeString = `${now.toLocaleDateString('hu-HU')} ${now.toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' })}`;
+
+            addDoc(collection(db, "chat_messages"), {
+                roomId: appState.activeChatRoomId,
+                user: appState.currentUser.username,
+                text: text,
+                time: timeString,
+                createdAt: serverTimestamp()
+            });
+
+            input.value = '';
+        }
+
+        function renderChatUI() {
+            if (!appState.chatRooms || appState.chatRooms.length === 0) return;
+            const activeRoom = appState.chatRooms.find(r => r.id === appState.activeChatRoomId) || appState.chatRooms[0];
+            appState.activeChatRoomId = activeRoom.id;
+
+            document.getElementById('chat-room-list').innerHTML = appState.chatRooms.map(r => `
+                <div class="chat-room-btn ${r.id === appState.activeChatRoomId ? 'active' : ''}" onclick="switchChatRoom('${r.id}')">
+                    # ${r.name}
+                </div>
+            `).join('');
+
+            document.getElementById('chat-active-room-title').innerText = `# ${activeRoom.name}`;
+
+            const delBtn = document.getElementById('chat-delete-room-btn');
+            if (activeRoom.id === 'general') { delBtn.style.display = 'none'; }
+            else { delBtn.style.display = 'block'; }
+            applyRBAC();
+
+            renderChatMessages();
+        }
+
+        function renderChatMessages() {
+            const container = document.getElementById('chat-messages-container');
+            const roomMsgs = appState.chatMessages.filter(m => m.roomId === appState.activeChatRoomId);
+
+            if (roomMsgs.length === 0) {
+                container.innerHTML = '<div style="flex:1; display:flex; justify-content:center; align-items:center; color:#64748b; font-style:italic;">Nincsenek üzenetek. Írj te először!</div>';
+                return;
+            }
+
+            container.innerHTML = roomMsgs.map(m => {
+                const isMe = m.user === appState.currentUser.username;
+                return `
+                <div style="text-align: ${isMe ? 'right' : 'left'}; margin-bottom: 5px;">
+                    <div style="font-size: 0.75rem; color: #64748b; margin-bottom: 3px;">
+                        ${isMe ? '' : `<span style="color:#94a3b8; font-weight:600;">@${m.user}</span> • `}
+                        ${m.time}
+                        ${isMe ? ` • <span style="color:#94a3b8; font-weight:600;">Te</span>` : ''}
+                    </div>
+                    <div style="display: inline-block; background: ${isMe ? '#38bdf8' : '#334155'}; color: ${isMe ? '#0f172a' : '#f8fafc'}; padding: 10px 14px; border-radius: 12px; max-width: 85%; text-align: left; word-break: break-word; line-height: 1.4;">
+                        ${m.text}
+                    </div>
+                </div>
+                `;
+            }).join('');
+
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // --- NAPLÓ ÉS FRISSÍTÉSEK ---
         async function refreshCheckinLog(e) {
             let btn = e ? e.currentTarget : null;
             let originalText = "🔄 Frissítés";
@@ -1071,7 +1295,7 @@
             const link = document.createElement("a"); link.href = url; link.download = filename; link.click(); URL.revokeObjectURL(url);
         }
 
-        // --- 2. ROUTING & HITELESÍTÉS ---
+        // --- ROUTING & HITELESÍTÉS ---
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('view') === 'setlist') {
             appState.activeEventId = parseInt(urlParams.get('eventId'));
@@ -1195,6 +1419,7 @@
             if (panelId === 'events-list-panel') document.getElementById('nav-events').classList.add('active');
             if (panelId === 'checkin-log-panel') document.getElementById('nav-checkins').classList.add('active');
             if (panelId === 'global-users-panel') document.getElementById('nav-users').classList.add('active');
+            if (panelId === 'chat-panel') { document.getElementById('nav-chat').classList.add('active'); renderChatUI(); }
             if (panelId === 'verify-panel') document.getElementById('nav-verify').classList.add('active');
 
             if (window.innerWidth <= 900) { document.getElementById('sidebar-menu-content').classList.remove('open'); }
@@ -1240,7 +1465,6 @@
             const r = document.getElementById('new-sys-role').value;
 
             if (u && p) {
-                // Szigorítás: Szuperadmin létrehozásához megerősítés kell
                 if (r === 'Superadmin') {
                     const promptPass = prompt("Szuperadmin jogkör kiadásához biztonsági okokból kérlek, add meg a SAJÁT jelenlegi jelszavad:");
                     if (!promptPass) return;
@@ -1344,7 +1568,6 @@
                     ? `<span class="badge btn-success" style="padding: 4px 8px;">✅ Bent van</span>`
                     : `<span class="badge btn-danger" style="padding: 4px 8px;">⏳ Várakozik</span>`;
 
-                // CSAK A SZUPERADMIN KATTINTHATJA LE!
                 let actionBtn = '';
                 if (s.present) {
                     actionBtn = `<button class="btn-secondary" style="opacity:0.5; cursor:not-allowed;" disabled>Rögzítve</button>`;
@@ -1427,7 +1650,7 @@
             }
         }
 
-        // --- ÚJ: GLOBÁLIS IGAZOLTATÁS SZKENNER ---
+        // --- IGAZOLTATÁS SZKENNER ---
         let verifyScanner = null;
         function toggleVerifyScanner() {
             const container = document.getElementById('verify-qr-reader-container');
@@ -1591,6 +1814,8 @@
         window.startSetlistTimer = startSetlistTimer; window.stopSetlistTimer = stopSetlistTimer; window.importTracklistTxt = importTracklistTxt;
         window.markStaffPresent = markStaffPresent; window.toggleQrScanner = toggleQrScanner;
         window.toggleVerifyScanner = toggleVerifyScanner; window.handleVerifyScan = handleVerifyScan;
+
+        window.createChatRoom = createChatRoom; window.deleteActiveChatRoom = deleteActiveChatRoom; window.switchChatRoom = switchChatRoom; window.sendChatMessage = sendChatMessage;
     </script>
 </body>
 
