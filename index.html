@@ -494,7 +494,7 @@
 <body>
 
     <div id="login-view" class="ui-panel">
-        <h1>Mixademy Core</h1>
+        <h1>Mixademy Event</h1>
         <p style="color: #94a3b8; margin-bottom: 30px; font-size: 0.95rem;">Biztonsági Beléptető</p>
         <input type="text" id="login-username" placeholder="Felhasználónév">
         <input type="password" id="login-password" placeholder="Jelszó">
@@ -1023,7 +1023,7 @@
 
         function exportCheckinsToTxt() {
             if (appState.checkins.length === 0) { alert("Nincs mit exportálni, a napló üres!"); return; }
-            let txtContent = "MIXADEMY CORE - JELENLÉTI NAPLÓ EXPORT\nKészítve: " + new Date().toLocaleString('hu-HU') + "\n=================================================\n\n";
+            let txtContent = "MIXADEMY EVENT - JELENLÉTI NAPLÓ EXPORT\nKészítve: " + new Date().toLocaleString('hu-HU') + "\n=================================================\n\n";
             appState.checkins.forEach(c => {
                 const inTime = c.checkInTime || c.time || 'Ismeretlen';
                 const outTime = c.checkOutTime || 'Folyamatban...';
@@ -1036,7 +1036,7 @@
             const evt = appState.events.find(e => e.id === appState.activeEventId);
             if (!evt) return;
 
-            let txt = `MIXADEMY CORE - ESEMÉNY DOKUMENTÁCIÓ\n=================================================\n`;
+            let txt = `MIXADEMY EVENT - ESEMÉNY DOKUMENTÁCIÓ\n=================================================\n`;
             txt += `Esemény: ${evt.name}\nDátum: ${evt.date}\nHelyszín: ${evt.location || 'Nincs megadva'}\nStátusz: ${evt.status}\n\n`;
 
             txt += `--- STÁB ÉS SZEMÉLYZET (${evt.staff.length} fő) ---\n`;
